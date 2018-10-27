@@ -6,7 +6,9 @@ import os
 import os.path as osp
 import numpy as np
 import cv2
+from PIL import Image
 import torch
+import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 
 
@@ -15,6 +17,7 @@ class Market1501(Dataset):
     def __init__(self, data_pth, *args, **kwargs):
         super(Market1501, self).__init__(*args, **kwargs)
 
+        ## parse image names to generate image ids
         imgs = os.listdir(data_pth)
         imgs = [im for im in imgs if osp.splitext(im)[-1] == '.jpg']
         self.im_pths = [osp.join(data_pth, im) for im in imgs]
@@ -31,24 +34,44 @@ class Market1501(Dataset):
             else:
                 self.person_infos[pid] = [i, ]
 
-        for pid, ids in self.person_infos.items():
+        self.pid_label_map = {}
+        for i, (pid, ids) in enumerate(self.person_infos.items()):
             self.person_infos[pid] = np.array(ids, dtype = np.int32)
+            self.pid_label_map[pid] = i
+
+        ## preprocessing
+        self.trans = transforms.Compose([
+                transforms.Resize((288, 144)),
+                transforms.RandomCrop((256, 128)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                #  transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
+            ])
 
 
     def __getitem__(self, idx):
         im_pth = self.im_pths[idx]
-        im = cv2.imread(im_pth)
-        return im, self.im_infos[im_pth][0]
+        pid = self.im_infos[im_pth][0]
+        im = Image.open(im_pth)
+        im = self.trans(im)
+        return im, self.pid_label_map[pid], self.im_infos[im_pth]
 
     def __len__(self):
         return len(self.im_pths)
 
+
+    def get_num_classes(self):
+        return len(list(self.person_infos.keys()))
 
 
 
 if __name__ == "__main__":
     ds_train = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_train')
     ds_test = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_test')
-    im = ds_train[1]
+    im, lb, _ = ds_train[1]
+    print(ds_train.get_num_classes())
+    print(ds_test.get_num_classes())
+    print(im.shape)
+    im = im.numpy().transpose(1,2,0)
     cv2.imshow('img', im)
     cv2.waitKey(0)

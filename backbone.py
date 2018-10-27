@@ -3,7 +3,6 @@
 
 
 import torch
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
@@ -63,3 +62,7 @@ if __name__ == '__main__':
     net = Network_D()
     out = net(intensor)
     print(out.shape)
+    #  for el in net.parameters():
+    #      print(el)
+    #      break
+    #  print(net.parameters())

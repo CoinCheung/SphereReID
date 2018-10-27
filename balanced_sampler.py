@@ -52,8 +52,7 @@ if __name__ == "__main__":
     sampler = BalancedSampler(ds, 16, 4)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 1)
 
-    for i, (imgs, lbs) in enumerate(dl):
-        print(i)
+    for i, (imgs, lbs, ids) in enumerate(dl):
         if i == 0:
             print(len(lbs))
             print(lbs)

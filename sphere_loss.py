@@ -13,7 +13,9 @@ class SphereLoss(nn.Module):
         super(SphereLoss, self).__init__(*args, **kwargs)
         self.scale = 14
         self.cross_entropy = nn.CrossEntropyLoss()
-        self.W = torch.Parameter(torch.Tensor(in_feats, n_classes), requires_grad = True)
+        # TODO: if performance not good, try initialize with method of msra or so
+        self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes),
+                requires_grad = True)
 
 
     def forward(self, x, label):
@@ -29,4 +31,11 @@ class SphereLoss(nn.Module):
 
 
 if __name__ == '__main__':
-    pass
+    Loss = SphereLoss(1024, 10)
+    a = torch.randn(20, 1024)
+    lb = torch.ones(20, dtype = torch.long)
+    loss = Loss(a, lb)
+    loss.backward()
+    print(loss.detach().numpy())
+    print(list(Loss.parameters())[0].shape)
+    print(type(next(Loss.parameters())))
