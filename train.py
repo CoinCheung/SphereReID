@@ -36,7 +36,8 @@ def train():
     net.cuda()
 
     ## optimizer
-    params = [net.parameters(), sphereloss.parameters()]
+    params = list(net.parameters())
+    params += list(sphereloss.parameters())
     optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 5e-4)
 
 
