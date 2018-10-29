@@ -12,6 +12,7 @@ class BalancedSampler(Sampler):
     def __init__(self, data_source, P, K, *args, **kwargs):
         super(BalancedSampler, self).__init__(data_source, *args, **kwargs)
 
+        print('create balanced sampler')
         self.data_source = data_source
         self.P, self.K = P, K
         self.person_infos = data_source.person_infos
@@ -53,8 +54,7 @@ if __name__ == "__main__":
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 1)
 
     for i, (imgs, lbs, ids) in enumerate(dl):
+        print(i)
         if i == 0:
             print(len(lbs))
             print(lbs)
-
-
