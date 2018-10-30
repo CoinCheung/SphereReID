@@ -12,7 +12,6 @@ class BalancedSampler(Sampler):
     def __init__(self, data_source, P, K, *args, **kwargs):
         super(BalancedSampler, self).__init__(data_source, *args, **kwargs)
 
-        print('create balanced sampler')
         self.data_source = data_source
         self.P, self.K = P, K
         self.person_infos = data_source.person_infos
@@ -22,6 +21,7 @@ class BalancedSampler(Sampler):
 
 
     def __iter__(self):
+        random.shuffle(self.persons)
         curr_p = 0
         for it in range(self.iter_num):
             pids = self.persons[curr_p: curr_p + self.P]

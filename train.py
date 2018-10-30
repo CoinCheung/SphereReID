@@ -17,9 +17,12 @@ from balanced_sampler import BalancedSampler
 
 
 ## logging
+logfile = 'sphere_reid-{}.log'.format(time.strftime('%Y-%m-%d-%H-%M-%S'))
+logfile = os.path.join('res', logfile)
 FORMAT = '%(levelname)s %(filename)s(%(lineno)d): %(message)s'
-logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
+logging.basicConfig(level=logging.INFO, format=FORMAT, filename=logfile)
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.StreamHandler())
 
 
 ## TODO: use logger to show set up process
@@ -39,8 +42,8 @@ def lr_scheduler(epoch, optimizer):
     else:
         for i, el in enumerate(lr_steps):
             if epoch == el:
-                logger.info('LR is set to: {}'.format(lr))
                 lr = start_lr * (lr_factor ** (i + 1))
+                logger.info('LR is set to: {}'.format(lr))
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = lr
     return optimizer
@@ -78,11 +81,6 @@ def train():
             lbs = lbs.cuda()
             embs = net(imgs)
             loss = sphereloss(embs, lbs)
-            #  print(imgs.shape)
-            #  print(embs.shape)
-            #  print(lbs.shape)
-            #  print(loss.detach().cpu().numpy())
-            #  print(loss.shape)
 
             optim.zero_grad()
             loss.backward()
@@ -95,6 +93,10 @@ def train():
                         it, log_loss, t_end - t_start)
                 logger.info(msg)
                 t_start = t_end
+
+    ## save model
+    if not os.path.exists('./res/'): os.makedirs('./res/')
+    torch.save(net.module.state_dict(), './res/model_final.pkl')
 
 
 if __name__ == '__main__':
