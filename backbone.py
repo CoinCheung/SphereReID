@@ -52,7 +52,9 @@ class Network_D(nn.Module):
         x = self.dp(x)
         x = self.fc(x)
         embd = self.bn3(x)
-        ## TODO: what is L2Norm in the paper ?
+        if not self.training:
+            embd_norm = torch.norm(embd, 2, 1, True).clamp(min = 1e-12).expand_as(embd)
+            embd = embd / embd_norm
         return embd
 
 

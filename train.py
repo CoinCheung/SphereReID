@@ -51,7 +51,6 @@ def lr_scheduler(epoch, optimizer):
 
 
 def train():
-
     ## data
     dataset = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_train')
     sampler = BalancedSampler(dataset, 16, 4)
@@ -70,7 +69,6 @@ def train():
     params = list(net.parameters())
     params += list(sphereloss.parameters())
     optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 5e-4)
-
 
     ## training
     t_start = time.time()
