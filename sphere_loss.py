@@ -13,9 +13,9 @@ class SphereLoss(nn.Module):
         super(SphereLoss, self).__init__(*args, **kwargs)
         self.scale = 14
         self.cross_entropy = nn.CrossEntropyLoss()
-        # TODO: if performance not good, try initialize with method of msra or so
         self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes),
                 requires_grad = True)
+        nn.init.kaiming_uniform_(self.W, a=1)
 
 
     def forward(self, x, label):
