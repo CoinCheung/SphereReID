@@ -2,15 +2,23 @@
 # -*- encoding: utf-8 -*-
 
 
+import sys
 import os
 import os.path as osp
+import logging
 import pickle
+from tqdm import tqdm
 import numpy as np
 import torch
 from backbone import Network_D
 from torch.utils.data import DataLoader
 from market1501 import Market1501
 
+
+
+FORMAT = '%(levelname)s %(filename)s(%(lineno)d): %(message)s'
+logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
+logger = logging.getLogger(__name__)
 
 
 def embed():
@@ -23,8 +31,10 @@ def embed():
     net.eval()
 
     ## data loader
-    query_set = Market1501('./dataset/Market-1501-v15.09.15/query')
-    gallery_set = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_test')
+    query_set = Market1501('./dataset/Market-1501-v15.09.15/query',
+            is_train = False)
+    gallery_set = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_test',
+            is_train = False)
     query_loader = DataLoader(query_set,
                         batch_size = 32,
                         num_workers = 4,
@@ -41,8 +51,8 @@ def embed():
     gallery_pids = []
     gallery_camids = []
     gallery_embds = []
-    ## TODO: maybe use tqmb
-    for i, (im, _, ids) in enumerate(query_loader):
+    logger.info('embedding query set ...')
+    for i, (im, _, ids) in enumerate(tqdm(query_loader)):
         im = im.cuda()
         pid = ids[0].numpy()
         camid = ids[1].numpy()
@@ -51,7 +61,8 @@ def embed():
         query_pids.extend(pid)
         query_camids.extend(camid)
 
-    for i, (im, _, ids) in enumerate(gallery_loader):
+    logger.info('embedding gallery set ...')
+    for i, (im, _, ids) in enumerate(tqdm(gallery_loader)):
         im = im.cuda()
         pid = ids[0].numpy()
         camid = ids[1].numpy()
@@ -71,6 +82,7 @@ def embed():
     embd_res = (query_embds, query_pids, query_camids, gallery_embds, gallery_pids, gallery_camids)
     with open('./res/embds.pkl', 'wb') as fw:
         pickle.dump(embd_res, fw)
+    logger.info('embedding done, dump to: ./res/embds.pkl')
 
     return embd_res
 
@@ -83,15 +95,17 @@ def evaluate(embd_res = None):
     query_embds, query_pids, query_camids, gallery_embds, gallery_pids, gallery_camids = embd_res
 
     ## compute distance matrix
+    logger.info('compute distance matrix')
     dist_mtx = np.matmul(query_embds, gallery_embds.T)
     dist_mtx = 1.0 / (dist_mtx + 1)
     n_q, n_g = dist_mtx.shape
 
+    logger.info('start evaluating ...')
     indices = np.argsort(dist_mtx, axis = 1)
     matches = gallery_pids[indices] == query_pids[:, np.newaxis]
-    print(matches.dtype)
+    matches = matches.astype(np.int32)
     all_aps = []
-    for query_idx in range(n_q):
+    for query_idx in tqdm(range(n_q)):
         query_pid = query_pids[query_idx]
         query_camid = query_camids[query_idx]
 

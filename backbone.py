@@ -30,12 +30,14 @@ class Network_D(nn.Module):
         self.fc = nn.Linear(in_features = 2048, out_features = 1024, bias = True)
         self.bn3 = nn.BatchNorm1d(1024)
 
-        state = model_zoo.load_url(resnet50_url)
-        for k, v in state.items():
-            if k == 'fc':
-                print(k)
+        # load pretrained weights
+        pretrained_state = model_zoo.load_url(resnet50_url)
+        state_dict = self.state_dict()
+        for k, v in pretrained_state.items():
+            if 'fc' in k:
                 continue
-            self.state_dict().update({k: v})
+            state_dict.update({k: v})
+        self.load_state_dict(state_dict)
 
 
     def forward(self, x):
