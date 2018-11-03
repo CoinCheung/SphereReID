@@ -87,11 +87,7 @@ def embed():
     return embd_res
 
 
-def evaluate(embd_res = None):
-    if embd_res == None:
-        with open('./res/embds.pkl', 'rb') as fr:
-            embd_res = pickle.load(fr)
-
+def evaluate(embd_res, cmc_max_rank = 1):
     query_embds, query_pids, query_camids, gallery_embds, gallery_pids, gallery_camids = embd_res
 
     ## compute distance matrix
@@ -105,11 +101,12 @@ def evaluate(embd_res = None):
     matches = gallery_pids[indices] == query_pids[:, np.newaxis]
     matches = matches.astype(np.int32)
     all_aps = []
+    all_cmcs = []
     for query_idx in tqdm(range(n_q)):
         query_pid = query_pids[query_idx]
         query_camid = query_camids[query_idx]
 
-        ## exclude same gallery pictures
+        ## exclude duplicated gallery pictures
         order = indices[query_idx]
         pid_diff = gallery_pids[order] != query_pid
         camid_diff = gallery_camids[order] != query_camid
@@ -118,6 +115,12 @@ def evaluate(embd_res = None):
 
         if not np.any(match): continue
 
+        ## compute cmc
+        cmc = match.cumsum()
+        cmc[cmc > 1] = 1
+        all_cmcs.append(cmc[:cmc_max_rank])
+
+        ## compute map
         num_real = match.sum()
         match_cum = match.cumsum()
         match_cum = [el / (1.0 + i) for i, el in enumerate(match_cum)]
@@ -127,13 +130,17 @@ def evaluate(embd_res = None):
 
     assert len(all_aps) > 0, "NO QUERRY APPEARS IN THE GALLERY"
     mAP = sum(all_aps) / len(all_aps)
+    all_cmcs = np.array(all_cmcs, dtype = np.float32)
+    cmc = np.mean(all_cmcs, axis = 0)
 
-    return mAP
-
+    return cmc, mAP
 
 
 if __name__ == '__main__':
     embd_res = embed()
-    mAP = evaluate()
-    print('map is: {}'.format(mAP))
+    with open('./res/embds.pkl', 'rb') as fr:
+        embd_res = pickle.load(fr)
+
+    cmc, mAP = evaluate(embd_res)
+    print('cmc is: {}, map is: {}'.format(cmc, mAP))
 

@@ -24,8 +24,7 @@ class Network_D(nn.Module):
         self.layer1 = resnet50.layer1
         self.layer2 = resnet50.layer2
         self.layer3 = resnet50.layer3
-        self.layer4 = create_layer(1024, 512, stride=1)
-        #  self.layer4 = resnet50.layer4
+        self.layer4 = create_layer(1024, 512, stride=2)
         self.bn2 = nn.BatchNorm1d(2048)
         self.dp = nn.Dropout(0.5)
         self.fc = nn.Linear(in_features=2048, out_features=1024, bias=True)
@@ -39,11 +38,13 @@ class Network_D(nn.Module):
                 continue
             state_dict.update({k: v})
         self.load_state_dict(state_dict)
-        nn.init.kaiming_uniform_(self.fc.weight, a=1)
+        #  nn.init.kaiming_uniform_(self.fc.weight, a=1)
+        nn.init.kaiming_normal_(self.fc.weight, a=1)
         nn.init.constant_(self.fc.bias, 0)
 
 
     def forward(self, x):
+
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -110,7 +111,7 @@ def create_layer(in_chan, mid_chan, stride):
     return nn.Sequential(
         Bottleneck(in_chan, mid_chan, stride=stride),
         Bottleneck(out_chan, mid_chan, stride=1),
-        Bottleneck(out_chan, mid_chan, stride=1),)
+        Bottleneck(out_chan, mid_chan, stride=1))
 
 
 
@@ -123,3 +124,14 @@ if __name__ == '__main__':
     #      print(el)
     #      break
     #  print(net.parameters())
+
+    params = list(net.parameters())
+    optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 5e-4)
+    lr = 3
+    optim.defaults['lr'] = 4
+    for param_group in optim.param_groups:
+        param_group['lr'] = lr
+        print(param_group.keys())
+        print(param_group['lr'])
+    print(optim.defaults['lr'])
+    print(optim.defaults.keys())

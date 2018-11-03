@@ -27,6 +27,7 @@ logger.addHandler(logging.StreamHandler())
 
 ## TODO: use logger to show set up process
 ## TODO: warm up each iter or each epoch ?
+## TODO: print configuration as logger information
 def lr_scheduler(epoch, optimizer):
     warmup_epoch = 20
     warmup_lr = 5e-5
@@ -40,6 +41,7 @@ def lr_scheduler(epoch, optimizer):
         lr = warmup_lr * (warmup_scale ** epoch)
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
+        optimizer.defaults['lr'] = lr
     else:
         for i, el in enumerate(lr_steps):
             if epoch == el:
@@ -47,7 +49,20 @@ def lr_scheduler(epoch, optimizer):
                 logger.info('LR is set to: {}'.format(lr))
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = lr
+                optimizer.defaults['lr'] = lr
     return optimizer
+
+
+def get_lr_scheduler():
+    warmup_epoch = 20
+    warmup_lr = 5e-5
+    start_lr = 1e-3
+    #  lr_steps = [130, 175]
+    lr_steps = [80, 100]
+    lr_factor = 0.1
+    warmup_scale = (start_lr / warmup_lr) ** (1.0 / warmup_epoch)
+
+    #  labmda1 = lambda epoch:
 
 
 
@@ -71,6 +86,7 @@ def train():
     params = list(net.parameters())
     params += list(sphereloss.parameters())
     optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 5e-4)
+    lr_lambdas = get_lr_scheduler()
 
     ## training
     t_start = time.time()
