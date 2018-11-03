@@ -48,7 +48,13 @@ class Market1501(Dataset):
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
             ])
-        self.trans_no_train = transforms.Compose([
+        self.trans_no_train_flip = transforms.Compose([
+                transforms.Resize((288, 144)),
+                transforms.RandomHorizontalFlip(1),
+                transforms.ToTensor(),
+                transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+            ])
+        self.trans_no_train_noflip = transforms.Compose([
                 transforms.Resize((288, 144)),
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
@@ -62,7 +68,9 @@ class Market1501(Dataset):
         if self.is_train:
             im = self.trans_train(im)
         else:
-            im = self.trans_no_train(im)
+            im_noflip = self.trans_no_train_noflip(im)
+            im_flip = self.trans_no_train_flip(im)
+            im = [im_noflip, im_flip]
         return im, self.pid_label_map[pid], self.im_infos[im_pth]
 
     def __len__(self):
@@ -91,6 +99,8 @@ if __name__ == "__main__":
                         num_workers = 1,
                         drop_last = False)
     for im, _, ids in loader:
-        print(im)
-        print(ids)
+        im_noflip, im_flip = im
+        print(im_noflip[1,1,1,1])
+        print(im_flip[1,1,1,-2])
+        #  print(ids)
         break

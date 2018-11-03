@@ -53,20 +53,28 @@ def embed():
     gallery_embds = []
     logger.info('embedding query set ...')
     for i, (im, _, ids) in enumerate(tqdm(query_loader)):
-        im = im.cuda()
+        im_noflip, im_flip = im  # use origin and flipped image
+        im_noflip = im_noflip.cuda()
+        im_flip = im_flip.cuda()
         pid = ids[0].numpy()
         camid = ids[1].numpy()
-        embed = net(im).detach().cpu().numpy()
+        embed_noflip = net(im_noflip).detach().cpu().numpy()
+        embed_flip = net(im_flip).detach().cpu().numpy()
+        embed = (embed_noflip + embed_flip) / 2.0  # aggregate two direction embeddings
         query_embds.append(embed)
         query_pids.extend(pid)
         query_camids.extend(camid)
 
     logger.info('embedding gallery set ...')
     for i, (im, _, ids) in enumerate(tqdm(gallery_loader)):
-        im = im.cuda()
+        im_noflip, im_flip = im  # use origin and flipped image
+        im_noflip = im_noflip.cuda()
+        im_flip = im_flip.cuda()
         pid = ids[0].numpy()
         camid = ids[1].numpy()
-        embed = net(im).detach().cpu().numpy()
+        embed_noflip = net(im_noflip).detach().cpu().numpy()
+        embed_flip = net(im_flip).detach().cpu().numpy()
+        embed = (embed_noflip + embed_flip) / 2.0  # aggregate two direction embeddings
         gallery_embds.append(embed)
         gallery_pids.extend(pid)
         gallery_camids.extend(camid)
