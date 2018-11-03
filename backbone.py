@@ -30,7 +30,7 @@ class Network_D(nn.Module):
         self.fc = nn.Linear(in_features=2048, out_features=1024, bias=True)
         self.bn3 = nn.BatchNorm1d(1024)
 
-        # load pretrained weights
+        # load pretrained weights and initialize added weight
         pretrained_state = model_zoo.load_url(resnet50_url)
         state_dict = self.state_dict()
         for k, v in pretrained_state.items():
@@ -38,7 +38,6 @@ class Network_D(nn.Module):
                 continue
             state_dict.update({k: v})
         self.load_state_dict(state_dict)
-        #  nn.init.kaiming_uniform_(self.fc.weight, a=1)
         nn.init.kaiming_normal_(self.fc.weight, a=1)
         nn.init.constant_(self.fc.bias, 0)
 

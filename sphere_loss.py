@@ -11,11 +11,10 @@ import torch.nn as nn
 class SphereLoss(nn.Module):
     def __init__(self, in_feats, n_classes, scale = 14, *args, **kwargs):
         super(SphereLoss, self).__init__(*args, **kwargs)
-        self.scale = 14
+        self.scale = scale
         self.cross_entropy = nn.CrossEntropyLoss()
         self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes),
                 requires_grad = True)
-        #  nn.init.kaiming_uniform_(self.W, a=1)
         nn.init.kaiming_normal_(self.W, a=1)
 
 
