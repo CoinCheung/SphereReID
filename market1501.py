@@ -48,6 +48,7 @@ class Market1501(Dataset):
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
             ])
+        ## H-Flip
         self.trans_no_train_flip = transforms.Compose([
                 transforms.Resize((288, 144)),
                 transforms.RandomHorizontalFlip(1),
@@ -59,7 +60,6 @@ class Market1501(Dataset):
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
             ])
-
 
     def __getitem__(self, idx):
         im_pth = self.im_pths[idx]
@@ -75,7 +75,6 @@ class Market1501(Dataset):
 
     def __len__(self):
         return len(self.im_pths)
-
 
     def get_num_classes(self):
         return len(list(self.person_infos.keys()))
@@ -99,8 +98,9 @@ if __name__ == "__main__":
                         num_workers = 1,
                         drop_last = False)
     for im, _, ids in loader:
-        im_noflip, im_flip = im
-        print(im_noflip[1,1,1,1])
-        print(im_flip[1,1,1,-2])
+        print(len(im))
+        #  im_noflip, im_flip = im
+        #  print(im_noflip[1,1,1,1])
+        #  print(im_flip[1,1,1,-2])
         #  print(ids)
         break

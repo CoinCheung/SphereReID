@@ -45,46 +45,43 @@ def embed():
                         drop_last = False)
 
     ## embed
+    logger.info('embedding query set ...')
     query_pids = []
     query_camids = []
     query_embds = []
-    gallery_pids = []
-    gallery_camids = []
-    gallery_embds = []
-    logger.info('embedding query set ...')
     for i, (im, _, ids) in enumerate(tqdm(query_loader)):
-        im_noflip, im_flip = im  # use origin and flipped image
-        im_noflip = im_noflip.cuda()
-        im_flip = im_flip.cuda()
+        embds = []
+        for crop in im:
+            crop = crop.cuda()
+            embds.append(net(crop).detach().cpu().numpy())
+        embed = sum(embds) / len(embds)
         pid = ids[0].numpy()
         camid = ids[1].numpy()
-        embed_noflip = net(im_noflip).detach().cpu().numpy()
-        embed_flip = net(im_flip).detach().cpu().numpy()
-        embed = (embed_noflip + embed_flip) / 2.0  # aggregate two direction embeddings
         query_embds.append(embed)
         query_pids.extend(pid)
         query_camids.extend(camid)
+    query_embds = np.vstack(query_embds)
+    query_pids = np.array(query_pids)
+    query_camids = np.array(query_camids)
 
     logger.info('embedding gallery set ...')
+    gallery_pids = []
+    gallery_camids = []
+    gallery_embds = []
     for i, (im, _, ids) in enumerate(tqdm(gallery_loader)):
-        im_noflip, im_flip = im  # use origin and flipped image
-        im_noflip = im_noflip.cuda()
-        im_flip = im_flip.cuda()
+        embds = []
+        for crop in im:
+            crop = crop.cuda()
+            embds.append(net(crop).detach().cpu().numpy())
+        embed = sum(embds) / len(embds)
         pid = ids[0].numpy()
         camid = ids[1].numpy()
-        embed_noflip = net(im_noflip).detach().cpu().numpy()
-        embed_flip = net(im_flip).detach().cpu().numpy()
-        embed = (embed_noflip + embed_flip) / 2.0  # aggregate two direction embeddings
         gallery_embds.append(embed)
         gallery_pids.extend(pid)
         gallery_camids.extend(camid)
-
-    query_pids = np.array(query_pids)
-    query_camids = np.array(query_camids)
-    query_embds = np.vstack(query_embds)
+    gallery_embds = np.vstack(gallery_embds)
     gallery_pids = np.array(gallery_pids)
     gallery_camids = np.array(gallery_camids)
-    gallery_embds = np.vstack(gallery_embds)
 
     ## dump embeds results
     embd_res = (query_embds, query_pids, query_camids, gallery_embds, gallery_pids, gallery_camids)
@@ -118,7 +115,9 @@ def evaluate(embd_res, cmc_max_rank = 1):
         order = indices[query_idx]
         pid_diff = gallery_pids[order] != query_pid
         camid_diff = gallery_camids[order] != query_camid
+        useful = gallery_pids[order] != -1
         keep = np.logical_or(pid_diff, camid_diff)
+        keep = np.logical_and(keep, useful)
         match = matches[query_idx][keep]
 
         if not np.any(match): continue
@@ -151,4 +150,3 @@ if __name__ == '__main__':
 
     cmc, mAP = evaluate(embd_res)
     print('cmc is: {}, map is: {}'.format(cmc, mAP))
-

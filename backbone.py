@@ -24,7 +24,7 @@ class Network_D(nn.Module):
         self.layer1 = resnet50.layer1
         self.layer2 = resnet50.layer2
         self.layer3 = resnet50.layer3
-        self.layer4 = create_layer(1024, 512, stride=2)
+        self.layer4 = create_layer(1024, 512, stride=1)
         self.bn2 = nn.BatchNorm1d(2048)
         self.dp = nn.Dropout(0.5)
         self.fc = nn.Linear(in_features=2048, out_features=1024, bias=True)
@@ -41,9 +41,7 @@ class Network_D(nn.Module):
         nn.init.kaiming_normal_(self.fc.weight, a=1)
         nn.init.constant_(self.fc.bias, 0)
 
-
     def forward(self, x):
-
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -61,7 +59,6 @@ class Network_D(nn.Module):
             embd_norm = torch.norm(embd, 2, 1, True).clamp(min=1e-12).expand_as(embd)
             embd = embd / embd_norm
         return embd
-
 
 
 class Bottleneck(nn.Module):

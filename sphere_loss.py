@@ -17,7 +17,6 @@ class SphereLoss(nn.Module):
                 requires_grad = True)
         nn.init.kaiming_normal_(self.W, a=1)
 
-
     def forward(self, x, label):
         x_norm = torch.norm(x, 2, 1, True).clamp(min = 1e-12).expand_as(x)
         x_norm = x / x_norm
