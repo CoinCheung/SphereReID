@@ -15,7 +15,8 @@ class SphereLoss(nn.Module):
         self.cross_entropy = nn.CrossEntropyLoss()
         self.W = torch.nn.Parameter(torch.randn(in_feats, n_classes),
                 requires_grad = True)
-        nn.init.kaiming_normal_(self.W, a=1)
+        #  nn.init.kaiming_normal_(self.W, a=1)
+        nn.init.xavier_normal_(self.W, gain=1)
 
     def forward(self, x, label):
         x_norm = torch.norm(x, 2, 1, True).clamp(min = 1e-12).expand_as(x)

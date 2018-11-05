@@ -21,10 +21,10 @@ class Network_D(nn.Module):
         self.bn1 = resnet50.bn1
         self.relu = resnet50.relu
         self.maxpool = resnet50.maxpool
-        self.layer1 = resnet50.layer1
-        self.layer2 = resnet50.layer2
-        self.layer3 = resnet50.layer3
-        self.layer4 = create_layer(1024, 512, stride=1)
+        self.layer1 = create_layer(64, 64, 3, stride=1)
+        self.layer2 = create_layer(256, 128, 4, stride=2)
+        self.layer3 = create_layer(512, 256, 6, stride=2)
+        self.layer4 = create_layer(1024, 512, 3, stride=1)
         self.bn2 = nn.BatchNorm1d(2048)
         self.dp = nn.Dropout(0.5)
         self.fc = nn.Linear(in_features=2048, out_features=1024, bias=True)
@@ -102,12 +102,12 @@ class Bottleneck(nn.Module):
         return out
 
 
-def create_layer(in_chan, mid_chan, stride):
-    out_chan = in_chan * 2
-    return nn.Sequential(
-        Bottleneck(in_chan, mid_chan, stride=stride),
-        Bottleneck(out_chan, mid_chan, stride=1),
-        Bottleneck(out_chan, mid_chan, stride=1))
+def create_layer(in_chan, mid_chan, b_num, stride):
+    out_chan = mid_chan * 4
+    blocks = [Bottleneck(in_chan, mid_chan, stride=stride),]
+    for i in range(1, b_num):
+        blocks.append(Bottleneck(out_chan, mid_chan, stride=1))
+    return nn.Sequential(*blocks)
 
 
 
@@ -131,3 +131,4 @@ if __name__ == '__main__':
         print(param_group['lr'])
     print(optim.defaults['lr'])
     print(optim.defaults.keys())
+    print(net)

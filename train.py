@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- encoding: utf-8 -*-
 
-
 import time
 import logging
 import os
@@ -26,22 +25,21 @@ logger.addHandler(logging.StreamHandler())
 
 
 ## TODO: use logger to show set up process
-## TODO: warm up each iter or each epoch ?
 ## TODO: print configuration as logger information
 def lr_scheduler(epoch, optimizer):
     warmup_epoch = 20
     warmup_lr = 5e-5
     start_lr = 1e-3
-    lr_steps = [80, 100]
+    lr_steps = [100, 140]
     lr_factor = 0.1
 
-    if epoch < warmup_epoch: # warmup
+    if epoch <= warmup_epoch:  # lr warmup
         warmup_scale = (start_lr / warmup_lr) ** (1.0 / warmup_epoch)
         lr = warmup_lr * (warmup_scale ** epoch)
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
         optimizer.defaults['lr'] = lr
-    else:
+    else:  # lr jump
         for i, el in enumerate(lr_steps):
             if epoch == el:
                 lr = start_lr * (lr_factor ** (i + 1))
@@ -49,19 +47,8 @@ def lr_scheduler(epoch, optimizer):
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = lr
                 optimizer.defaults['lr'] = lr
-    return optimizer
-
-
-def get_lr_scheduler():
-    warmup_epoch = 20
-    warmup_lr = 5e-5
-    start_lr = 1e-3
-    #  lr_steps = [130, 175]
-    lr_steps = [80, 100]
-    lr_factor = 0.1
-    warmup_scale = (start_lr / warmup_lr) ** (1.0 / warmup_epoch)
-
-    #  labmda1 = lambda epoch:
+    lrs = [round(el['lr'], 6) for el in optimizer.param_groups]
+    return optimizer, lrs
 
 
 
@@ -84,14 +71,13 @@ def train():
     ## optimizer
     params = list(net.parameters())
     params += list(sphereloss.parameters())
-    optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 5e-4)
-    lr_lambdas = get_lr_scheduler()
+    optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 1e-3)
 
     ## training
     t_start = time.time()
     loss_it = []
-    for ep in range(140):
-        optim = lr_scheduler(ep, optim)
+    for ep in range(180):
+        optim, lrs = lr_scheduler(ep, optim)
         for it, (imgs, lbs, ids) in enumerate(dl):
             imgs = imgs.cuda()
             lbs = lbs.cuda()
@@ -105,9 +91,10 @@ def train():
 
             if it % 10 == 0 and it != 0:
                 t_end = time.time()
+                t_interval = t_end - t_start
                 log_loss = sum(loss_it) / len(loss_it)
-                msg = 'epoch: {}, iter: {}, loss: {:4f}, time: {:4f}'.format(ep,
-                        it, log_loss, t_end - t_start)
+                msg = 'epoch: {}, iter: {}, loss: {:4f}, lr: {}, time: {:4f}'.format(ep,
+                        it, log_loss, lrs, t_interval)
                 logger.info(msg)
                 loss_it = []
                 t_start = t_end
@@ -116,7 +103,7 @@ def train():
     if not os.path.exists('./res/'): os.makedirs('./res/')
     torch.save(net.module.state_dict(), './res/model_final.pkl')
 
-    logger.info('\n\nTraining done, model saved to {}'.format('./res/model_final.pkl'))
+    logger.info('\nTraining done, model saved to {}\n\n'.format('./res/model_final.pkl'))
 
 
 if __name__ == '__main__':

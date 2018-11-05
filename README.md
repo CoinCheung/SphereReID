@@ -6,8 +6,14 @@ My working environment is python3.5.2, and my pytorch version is 0.4.0. If thing
 
 I only implement the *network-D* in the paper which is claimed to have highest performance of the four networks that the author proposed. 
 
-To train the model, just run the training script:  
+* To train the model, just run the training script:  
 ```
     $ python train.py
 ```
 This will train the model and save the parameters to the directory of ```res/```.
+
+* To evaluate the trained model:
+```
+    $ python evaluate.py
+```
+This will embed the gallery and query set, and then compute cmc and mAP.
