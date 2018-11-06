@@ -30,7 +30,7 @@ def lr_scheduler(epoch, optimizer):
     warmup_epoch = 20
     warmup_lr = 5e-5
     start_lr = 1e-3
-    lr_steps = [100, 140]
+    lr_steps = [120, 160]
     lr_factor = 0.1
 
     if epoch <= warmup_epoch:  # lr warmup

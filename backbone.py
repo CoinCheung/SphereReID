@@ -62,13 +62,16 @@ class Network_D(nn.Module):
 
 
 class Bottleneck(nn.Module):
-    def __init__(self, in_chan, mid_chan, stride=1, *args, **kwargs):
+    def __init__(self, in_chan, mid_chan, stride=1, stride_at_1x1=False, *args, **kwargs):
         super(Bottleneck, self).__init__(*args, **kwargs)
 
+        stride1x1, stride3x3 = (stride, 1) if stride_at_1x1 else (1, stride)
+
         out_chan = 4 * mid_chan
-        self.conv1 = nn.Conv2d(in_chan, mid_chan, kernel_size=1, bias=False)
+        self.conv1 = nn.Conv2d(in_chan, mid_chan, kernel_size=1, stride=stride1x1,
+                bias=False)
         self.bn1 = nn.BatchNorm2d(mid_chan)
-        self.conv2 = nn.Conv2d(mid_chan, mid_chan, kernel_size=3, stride=stride,
+        self.conv2 = nn.Conv2d(mid_chan, mid_chan, kernel_size=3, stride=stride3x3,
                 padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(mid_chan)
         self.conv3 = nn.Conv2d(mid_chan, out_chan, kernel_size=1, bias=False)
