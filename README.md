@@ -6,6 +6,14 @@ My working environment is python3.5.2, and my pytorch version is 0.4.0. If thing
 
 I only implement the *network-D* in the paper which is claimed to have highest performance of the four networks that the author proposed. 
 
+
+### Get Market1501 dataset
+Execute the script in the command line:
+```
+    $ sh get_market1501.sh
+```
+
+
 ### Train and Evaluate
 * To train the model, just run the training script:  
 ```
