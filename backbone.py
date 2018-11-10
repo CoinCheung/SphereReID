@@ -119,10 +119,6 @@ if __name__ == '__main__':
     net = Network_D()
     out = net(intensor)
     print(out.shape)
-    #  for el in net.parameters():
-    #      print(el)
-    #      break
-    #  print(net.parameters())
 
     params = list(net.parameters())
     optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 5e-4)

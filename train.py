@@ -8,6 +8,7 @@ import sys
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+import numpy as np
 
 from backbone import Network_D
 from sphere_loss import SphereLoss
@@ -16,6 +17,7 @@ from balanced_sampler import BalancedSampler
 
 
 ## logging
+if not os.path.exists('./res/'): os.makedirs('./res/')
 logfile = 'sphere_reid-{}.log'.format(time.strftime('%Y-%m-%d-%H-%M-%S'))
 logfile = os.path.join('res', logfile)
 FORMAT = '%(levelname)s %(filename)s(%(lineno)d): %(message)s'
@@ -24,13 +26,14 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.StreamHandler())
 
 
-## TODO: use logger to show set up process
-## TODO: print configuration as logger information
+
+
 def lr_scheduler(epoch, optimizer):
     warmup_epoch = 20
-    warmup_lr = 5e-5
+    warmup_lr = 1e-5
+    lr_steps = [90, 130]
     start_lr = 1e-3
-    lr_steps = [120, 160]
+    #  lr_steps = [90, 120]
     lr_factor = 0.1
 
     if epoch <= warmup_epoch:  # lr warmup
@@ -43,7 +46,7 @@ def lr_scheduler(epoch, optimizer):
         for i, el in enumerate(lr_steps):
             if epoch == el:
                 lr = start_lr * (lr_factor ** (i + 1))
-                logger.info('LR is set to: {}'.format(lr))
+                logger.info('====> LR is set to: {}'.format(lr))
                 for param_group in optimizer.param_groups:
                     param_group['lr'] = lr
                 optimizer.defaults['lr'] = lr
@@ -51,16 +54,17 @@ def lr_scheduler(epoch, optimizer):
     return optimizer, lrs
 
 
-
 def train():
     ## data
+    logger.info('creating dataloader')
     dataset = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_train',
             is_train = True)
-    sampler = BalancedSampler(dataset, 16, 4)
-    dl = DataLoader(dataset, batch_sampler = sampler, num_workers = 4)
     num_classes = dataset.get_num_classes()
+    sampler = BalancedSampler(dataset, 16, 4)
+    dl = DataLoader(dataset, batch_sampler = sampler, num_workers = 8)
 
     ## network and loss
+    logger.info('setup model and loss')
     sphereloss = SphereLoss(1024, num_classes)
     sphereloss.cuda()
     net = Network_D()
@@ -69,26 +73,28 @@ def train():
     net.cuda()
 
     ## optimizer
+    logger.info('creating optimizer')
     params = list(net.parameters())
     params += list(sphereloss.parameters())
-    optim = torch.optim.Adam(params, lr = 1e-3, weight_decay = 1e-3)
+    optim = torch.optim.Adam(params, lr = 1e-3)
 
     ## training
+    logger.info('start training')
     t_start = time.time()
     loss_it = []
-    for ep in range(180):
+    for ep in range(150):
         optim, lrs = lr_scheduler(ep, optim)
         for it, (imgs, lbs, ids) in enumerate(dl):
             imgs = imgs.cuda()
             lbs = lbs.cuda()
+
             embs = net(imgs)
             loss = sphereloss(embs, lbs)
-
             optim.zero_grad()
             loss.backward()
             optim.step()
-            loss_it.append(loss.detach().cpu().numpy())
 
+            loss_it.append(loss.detach().cpu().numpy())
             if it % 10 == 0 and it != 0:
                 t_end = time.time()
                 t_interval = t_end - t_start
@@ -100,9 +106,7 @@ def train():
                 t_start = t_end
 
     ## save model
-    if not os.path.exists('./res/'): os.makedirs('./res/')
     torch.save(net.module.state_dict(), './res/model_final.pkl')
-
     logger.info('\nTraining done, model saved to {}\n\n'.format('./res/model_final.pkl'))
 
 

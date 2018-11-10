@@ -47,14 +47,15 @@ if __name__ == "__main__":
     from market1501 import Market1501
     import cv2
     ds = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_train')
-    #  im = ds[1]
-    #  cv2.imshow('img', im)
-    #  cv2.waitKey(0)
-    sampler = BalancedSampler(ds, 16, 4)
-    dl = DataLoader(ds, batch_sampler = sampler, num_workers = 1)
+    sampler1 = BalancedSampler(ds, 2, 4)
+    sampler2 = BalancedSampler(ds, 2, 4)
+    dl1 = DataLoader(ds, batch_sampler = sampler1, num_workers = 1)
+    dl2 = DataLoader(ds, batch_sampler = sampler2, num_workers = 1)
 
-    for i, (imgs, lbs, ids) in enumerate(dl):
-        print(i)
-        if i == 0:
-            print(len(lbs))
-            print(lbs)
+    for jj in range(2):
+        for i, ((imgs1, lbs1, ids1), (imgs2, lbs2, ids2)) in enumerate(zip(dl1, dl2)):
+            print(i)
+            print(lbs1)
+            print(lbs2)
+
+            if  i == 4: break
