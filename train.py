@@ -29,7 +29,7 @@ logger.addHandler(logging.StreamHandler())
 #  start_lr = 1e-2
 
 def lr_scheduler(epoch, optimizer):
-    warmup_epoch = 40
+    warmup_epoch = 20
     warmup_lr = 1e-5
     lr_steps = [90, 130]
     start_lr = 1e-3
