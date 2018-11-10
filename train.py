@@ -59,7 +59,9 @@ def train():
             is_train = True)
     num_classes = dataset.get_num_classes()
     sampler = BalancedSampler(dataset, 16, 4)
-    dl = DataLoader(dataset, batch_sampler = sampler, num_workers = 8)
+    dl = DataLoader(dataset,
+            batch_sampler = sampler,
+            num_workers = 8)
 
     ## network and loss
     logger.info('setup model and loss')
