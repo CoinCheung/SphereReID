@@ -86,7 +86,6 @@ class Market1501(Dataset):
         return len(list(self.person_infos.keys()))
 
 
-
 if __name__ == "__main__":
     ds_train = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_train')
     ds_test = Market1501('./dataset/Market-1501-v15.09.15/bounding_box_test', is_train = False)

@@ -2,10 +2,8 @@
 # -*- encoding: utf-8 -*-
 
 
-
 import torch
 import torch.nn as nn
-
 
 
 class SphereLoss(nn.Module):
@@ -27,7 +25,6 @@ class SphereLoss(nn.Module):
         s_cos_th = self.scale * cos_th
         loss = self.cross_entropy(s_cos_th, label)
         return loss
-
 
 
 if __name__ == '__main__':

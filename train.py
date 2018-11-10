@@ -27,13 +27,11 @@ logger.addHandler(logging.StreamHandler())
 
 
 
-
 def lr_scheduler(epoch, optimizer):
     warmup_epoch = 20
     warmup_lr = 1e-5
     lr_steps = [90, 130]
     start_lr = 1e-3
-    #  lr_steps = [90, 120]
     lr_factor = 0.1
 
     if epoch <= warmup_epoch:  # lr warmup
@@ -82,7 +80,7 @@ def train():
     logger.info('start training')
     t_start = time.time()
     loss_it = []
-    for ep in range(150):
+    for ep in range(170):
         optim, lrs = lr_scheduler(ep, optim)
         for it, (imgs, lbs, ids) in enumerate(dl):
             imgs = imgs.cuda()

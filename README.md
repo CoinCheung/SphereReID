@@ -25,5 +25,10 @@ Sadly, I am not able to reproduce the result merely with the method mentioned in
 
 * During embedding phase, aggregate the embeddings of the original pictures and those of their horizontal counterparts by computing the average embeddings, as done in [MGN](https://arxiv.org/pdf/1804.01438.pdf).   
 
-* 
+* Let the stride of the last stage of resnet50 backbone to be 1 rather than 2.
 
+* During training phase, use [random erasing](https://arxiv.org/abs/1708.04896) augumentation method.
+
+* Adjust the total training epoch number to 150, and let the learning rate jump by a factor of 0.1 at epoch 90 and 130.
+
+With these tricks, the rank-1 cmc and mAP of my implementation reaches 93.08 and 83.01.
