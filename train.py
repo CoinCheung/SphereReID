@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 import numpy as np
 
 from backbone import Network_D
-from sphere_loss import SphereLoss
+from sphere_loss import SphereLoss, OhemSphereLoss
 from market1501 import Market1501
 from balanced_sampler import BalancedSampler
 
@@ -66,17 +66,17 @@ def train():
 
     ## network and loss
     logger.info('setup model and loss')
-    sphereloss = SphereLoss(1024, num_classes)
-    sphereloss.cuda()
+    #  criteria = SphereLoss(1024, num_classes)
+    criteria = OhemSphereLoss(1024, num_classes, thresh=0.8)
+    criteria.cuda()
     net = Network_D()
-    net = nn.DataParallel(net)
     net.train()
     net.cuda()
 
     ## optimizer
     logger.info('creating optimizer')
     params = list(net.parameters())
-    params += list(sphereloss.parameters())
+    params += list(criteria.parameters())
     optim = torch.optim.Adam(params, lr = 1e-3)
 
     ## training
@@ -90,24 +90,24 @@ def train():
             lbs = lbs.cuda()
 
             embs = net(imgs)
-            loss = sphereloss(embs, lbs)
+            loss = criteria(embs, lbs)
             optim.zero_grad()
             loss.backward()
             optim.step()
 
             loss_it.append(loss.detach().cpu().numpy())
-            if it % 10 == 0 and it != 0:
-                t_end = time.time()
-                t_interval = t_end - t_start
-                log_loss = sum(loss_it) / len(loss_it)
-                msg = 'epoch: {}, iter: {}, loss: {:4f}, lr: {}, time: {:4f}'.format(ep,
-                        it, log_loss, lrs, t_interval)
-                logger.info(msg)
-                loss_it = []
-                t_start = t_end
+        ## print log
+        t_end = time.time()
+        t_interval = t_end - t_start
+        log_loss = sum(loss_it) / len(loss_it)
+        msg = 'epoch: {}, iter: {}, loss: {:.4f}, lr: {}, time: {:.4f}'.format(ep,
+                it, log_loss, lrs, t_interval)
+        logger.info(msg)
+        loss_it = []
+        t_start = t_end
 
     ## save model
-    torch.save(net.module.state_dict(), './res/model_final.pkl')
+    torch.save(net.state_dict(), './res/model_final.pkl')
     logger.info('\nTraining done, model saved to {}\n\n'.format('./res/model_final.pkl'))
 
 
